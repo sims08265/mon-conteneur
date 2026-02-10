@@ -1,0 +1,49 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: mon_app_db
+      MYSQL_USER: mon_user
+      MYSQL_PASSWORD: mon_password
+    #ports:
+    # - "3306:3306"
+    container_name: mydb
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mon_app
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    container_name: myback
+    networks:
+      - mon_app
+    depends_on:
+      db: 
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    environment:
+      API_URL: http://localhost:3000/api/utilisateurs
+    container_name: myfront
+    depends_on:
+      - backend
+
+networks:
+  mon_app:
+  
+volumes:
+  mysql_data:

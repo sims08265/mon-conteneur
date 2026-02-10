@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #loading{
+            padding: 40px;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .user-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .user-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .user-info {
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .user-info strong {
+            color: #333;
+            display: inline-block;
+            width: 70px;
+        }
+
+        .user-id {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .delete-btn:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Formulaire d'ajout */
+        .form-container {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+        }
+
+        @media (max-width: 768px) {
+            .users-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestion des Utilisateurs</h1>
+            <p>Application de démonstration avec Node.js et MYSQL</p>
+        </header>
+
+        <div class="content">
+            <!-- Contrôles -->
+            <div class="controls">
+                <button id="refreshBtn" onclick="chargerUtilisateurs()">
+                    Actualiser
+                </button>
+                <button id="addBtn" onclick="toggleForm()">
+                     Ajouter un utilisateur
+                </button>
+            </div>
+
+            <!-- Formulaire d'ajout -->
+            <div id="formContainer" class="form-container">
+                <h2>Ajouter un nouvel utilisateur</h2>
+                <form id="userForm" onsubmit="ajouterUtilisateur(event)">
+                    <div class="form-group">
+                        <label for="nom">Nom complet *</label>
+                        <input type="text" id="nom" required placeholder="Ex: Sims">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" required placeholder="Ex: sims@email.fr">
+                    </div>
+                                        <div class="form-group">
+                        <label for="age">Âge</label>
+                        <input type="number" id="age" min="1" max="120" placeholder="Ex: 30">
+                    </div>
+                    <div class="form-group">
+                        <label for="ville">Ville</label>
+                        <input type="text" id="ville" placeholder="Ex: Paris">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit">Enregistrer</button>
+                        <button type="button" class="cancel-btn" onclick="toggleForm()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Statistiques -->
+            <div id="stats" class="stats" style="display: none;">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">Utilisateurs</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="avgAge">0</div>
+                    <div class="stat-label">Âge moyen</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalCities">0</div>
+                    <div class="stat-label">Villes</div>
+                </div>
+            </div>
+
+            <!-- Message d'erreur -->
+            <div id="error" style="display: none;"></div>
+
+            <!-- Chargement -->
+            <div id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <div style="text-align: center;">Chargement des données...</div>
+            </div>
+
+            <!-- Grille des utilisateurs -->
+            <div id="usersContainer" class="users-grid"></div>
+        </div>
+    </div>
+
+    <script src="env-config.js"></script>
+    <script>
+        // Configuration de l'API
+        const API_URL = window.__ENV__.API_URL;
+
+        // Charger les utilisateurs au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerUtilisateurs();
+        });
+
+        // Fonction pour charger tous les utilisateurs
+        async function chargerUtilisateurs() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const usersContainer = document.getElementById('usersContainer');
+            const stats = document.getElementById('stats');
+
+            // Afficher le chargement
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            usersContainer.innerHTML = '';
+            stats.style.display = 'none';
+
+            try {
+                const response = await fetch(API_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                loading.style.display = 'none';
+
+                if (result.success && result.data.length > 0) {
+                    afficherUtilisateurs(result.data);
+                    afficherStatistiques(result.data);
+                    stats.style.display = 'flex';
+                } else {
+                    usersContainer.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">
+                            <h3> Aucun utilisateur trouvé</h3>
+                            <p>Ajoutez votre premier utilisateur pour commencer!</p>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.innerHTML = `
+                    <strong>Erreur de connexion</strong><br>
+                    ${err.message}<br>
+                    <small>Assurez-vous que le serveur Node.js est démarré sur le port 3000</small>
+                `;
+                console.error('Erreur:', err);
+            }
+        }
+
+        // Fonction pour afficher les utilisateurs
+        function afficherUtilisateurs(utilisateurs) {
+            const container = document.getElementById('usersContainer');
+            container.innerHTML = '';
+
+            utilisateurs.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'user-card';
+                card.innerHTML = `
+                    <span class="user-id">#${user.id}</span>
+                    <h3>${user.nom}</h3>
+                    <div class="user-info">
+                        <strong>Email:</strong> ${user.email}
+                    </div>
+                    <div class="user-info">
+                        <strong>Âge:</strong> ${user.age || 'Non renseigné'}
+                    </div>
+                    <div class="user-info">
+                        <strong> Ville:</strong> ${user.ville || 'Non renseignée'}
+                    </div>
+                    <button class="delete-btn" onclick="supprimerUtilisateur(${user.id}, '${user.nom}')">
+                         Supprimer
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Fonction pour afficher les statistiques
+        function afficherStatistiques(utilisateurs) {
+            const totalUsers = utilisateurs.length;
+            
+            // Calculer l'âge moyen
+            const ages = utilisateurs.filter(u => u.age).map(u => u.age);
+            const avgAge = ages.length > 0 
+                ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length)
+                : 0;
+            
+            // Compter les villes uniques
+            const villes = new Set(utilisateurs.filter(u => u.ville).map(u => u.ville));
+            const totalCities = villes.size;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('avgAge').textContent = avgAge;
+            document.getElementById('totalCities').textContent = totalCities;
+        }
+
+        // Fonction pour basculer l'affichage du formulaire
+        function toggleForm() {
+            const formContainer = document.getElementById('formContainer');
+            const addBtn = document.getElementById('addBtn');
+            
+            if (formContainer.classList.contains('active')) {
+                formContainer.classList.remove('active');
+                addBtn.textContent = ' Ajouter un utilisateur';
+                document.getElementById('userForm').reset();
+            } else {
+                formContainer.classList.add('active');
+                addBtn.textContent = ' Fermer le formulaire';
+                document.getElementById('nom').focus();
+            }
+        }
+
+        // Fonction pour ajouter un utilisateur
+        async function ajouterUtilisateur(event) {
+            event.preventDefault();
+
+            const nom = document.getElementById('nom').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const age = document.getElementById('age').value;
+            const ville = document.getElementById('ville').value.trim();
+
+            const nouveauUtilisateur = {
+                nom,
+                email,
+                age: age ? parseInt(age) : null,
+                ville: ville || null
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(nouveauUtilisateur)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert(`Utilisateur "${nom}" ajouté avec succès!`);
+                    toggleForm();
+                    chargerUtilisateurs();
+                } else {
+                    alert(`Erreur: ${result.error || 'Impossible d\'ajouter l\'utilisateur'}`);
+                }
+
+            } catch (err) {
+                alert(`Erreur de connexion: ${err.message}`);
+                console.error('Erreur:', err);
+            }
+        }
+
+        // Fonction pour supprimer un utilisateur
+        async function supprimerUtilisateur(id, nom) {
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer "${nom}" ?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert(` Utilisateur "${nom}" supprimé avec succès!`);
+                    chargerUtilisateurs();
+                } else {
+                    alert(` Erreur: ${result.error || 'Impossible de supprimer l\'utilisateur'}`);
+                }
+
+            } catch (err) {
+                alert(` Erreur de connexion: ${err.message}`);
+                console.error('Erreur:', err);
+            }
+        }
+
+        // Raccourci clavier pour actualiser (F5 ou Ctrl+R)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                chargerUtilisateurs();
+            }
+        });
+    </script>
+</body>
+</html>

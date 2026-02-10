@@ -35,7 +35,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      API_URL: http://localhost:3000/api/utilisateurs
+      API_URL: http://192.168.122.70:3000/api/utilisateurs
     container_name: myfront
     depends_on:
       - backend

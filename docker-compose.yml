@@ -13,8 +13,6 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - mon_app
-    env_file:
-      - .env
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
